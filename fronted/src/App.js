@@ -17,6 +17,7 @@ import DocViewAppt from './components/DocViewAppt';
 import DocSettings from './components/DocSettings';
 import ShowDiagnoses from './components/ShowDiagnoses';
 import Diagnose from './components/Diagnose';
+import DocLayout from './components/DocLayout';
 
 function App() {
   return (
@@ -26,22 +27,11 @@ function App() {
         <Routes>
           <Route path="/MakeDoc" element={<MakeDoc />} />
           <Route path="/createAcc" element={<CreateAccount />} />
-          <Route path="/Diagnose/:id" element={<Diagnose />} />
-          {/* <Route path="/showDiagnoses/:id" element={<ShowDiagnoses />} /> */}
-          {/* <Route path="/Home" element={<Home />} /> */}
-          {/* <Route path="/ViewOneHistory/:email" element={<ViewOneHistory />} /> */}
-          {/* <Route path="/scheduleAppt" element={<SchedulingAppt />} /> */}
           <Route index element={<LogIn />} />
           <Route path="/login" element={<LogIn />} />
          
           <Route path="/create-schedule" element={<ScheduleManagementForm />} />
-          <Route path='/DocSettings' element={<DocSettings/>}/>
-          <Route path="/DocHome" element={<DocHome />} />
-          <Route path='/MedHistView' element={<ViewMedHist />} />
-          <Route path='/ApptList' element={<DocViewAppt/>} />
-          {/* <Route path="/PatientsViewAppt" element={<PatientsViewAppointments />} /> */}
-
-          {/* Use the PatientLayout for the specified routes */}
+          
           <Route element={<Layout />}>
             <Route path="scheduleAppt" element={<SchedulingAppt />} />
             <Route path="PatientsViewAppt" element={<PatientsViewAppointments />} />
@@ -49,6 +39,14 @@ function App() {
             <Route path="/Home" element={<Home />} />
             <Route path="/showDiagnoses/:id" element={<ShowDiagnoses />} />
             <Route path="settings" element={<Settings />} />
+          </Route>
+
+          <Route element={<DocLayout/>}>
+          <Route path="/Diagnose/:id" element={<Diagnose />} />
+          <Route path='/DocSettings' element={<DocSettings/>}/>
+          <Route path="/DocHome" element={<DocHome />} />
+          <Route path='/MedHistView' element={<ViewMedHist />} />
+          <Route path='/ApptList' element={<DocViewAppt/>} />
           </Route>
         </Routes>
       </div>

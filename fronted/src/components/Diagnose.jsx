@@ -92,9 +92,9 @@ const Diagnose = () => {
     };
 
     return (
-        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+        <Box >
             <AppBarComponent />
-            <Container maxWidth="sm">
+            <Container maxWidth="md">
                 <Paper elevation={3} sx={{ padding: 4, marginTop: 4, borderRadius: 2 }}>
                     <form onSubmit={handleSubmit}>
                         <DiagnosisTextArea diagnosis={diagnosis} setDiagnosis={setDiagnosis} />
