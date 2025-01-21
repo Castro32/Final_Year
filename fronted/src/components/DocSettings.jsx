@@ -8,8 +8,13 @@ import {
     Container,
     TextField,
     FormControl,
-    FormLabel
+    FormLabel,
+    InputAdornment,
+    IconButton
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 // import './App.css';
 
 export class DocSettings extends Component {
@@ -17,13 +22,21 @@ export class DocSettings extends Component {
         super(props);
         this.state = {
             oldPassword: '',
-            newPassword: ''
+            newPassword: '',
+            showOldPassword: false,
+            showNewPassword: false
         };
     }
 
     handleChange = (event) => {
         const { name, value } = event.target;
         this.setState({ [name]: value });
+    };
+
+    handleToggleVisibility = (field) => {
+        this.setState((prevState) => ({
+            [field]: !prevState[field]
+        }));
     };
 
     handleSubmit = (event) => {
@@ -45,16 +58,26 @@ export class DocSettings extends Component {
                     .then(res => {
                         let didUpdate = res.data.affectedRows;
                         if (didUpdate === 0) {
-                            window.alert("Old Password is wrong");
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Old Password is wrong',
+                            });
                         } else {
-                            window.alert("Password Reset Successful");
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Password Reset Successful',
+                            }).then(() => {
+                                window.location.href = '/login';
+                            });
                         }
                     });
             });
     };
 
     render() {
-        const { oldPassword, newPassword } = this.state;
+        const { oldPassword, newPassword, showOldPassword, showNewPassword } = this.state;
 
         return (
             <Box sx={{ flexGrow: 1 }}>
@@ -74,21 +97,43 @@ export class DocSettings extends Component {
                             <FormControl fullWidth margin="normal">
                                 <FormLabel>Old Password</FormLabel>
                                 <TextField
-                                    type="password"
+                                    type={showOldPassword ? 'text' : 'password'}
                                     name="oldPassword"
                                     value={oldPassword}
                                     onChange={this.handleChange}
                                     required
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={() => this.handleToggleVisibility('showOldPassword')}
+                                                >
+                                                    {showOldPassword ? <VisibilityOff /> : <Visibility />}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
                                 />
                             </FormControl>
                             <FormControl fullWidth margin="normal">
                                 <FormLabel>New Password</FormLabel>
                                 <TextField
-                                    type="password"
+                                    type={showNewPassword ? 'text' : 'password'}
                                     name="newPassword"
                                     value={newPassword}
                                     onChange={this.handleChange}
                                     required
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={() => this.handleToggleVisibility('showNewPassword')}
+                                                >
+                                                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
                                 />
                             </FormControl>
                             <Button
