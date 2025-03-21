@@ -98,7 +98,7 @@ const ViewMedHist = () => {
           <Typography variant="h6" align="center" gutterBottom>
             Search By Name
           </Typography>
-          <TextField name="email" label="Email" fullWidth margin="normal" />
+          <TextField name="email" label="Name" fullWidth margin="normal" />
           <Box textAlign="center">
             <Button
               type="submit"

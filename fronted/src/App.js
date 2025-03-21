@@ -18,6 +18,7 @@ import DocSettings from './components/DocSettings';
 import ShowDiagnoses from './components/ShowDiagnoses';
 import Diagnose from './components/Diagnose';
 import DocLayout from './components/DocLayout';
+import AdminDashboard from './components/admindashboard';
 
 function App() {
   return (
@@ -25,12 +26,14 @@ function App() {
       <div>
         <Header />
         <Routes>
+          <Route path='/admin' element={<AdminDashboard/>} />
           <Route path="/MakeDoc" element={<MakeDoc />} />
           <Route path="/createAcc" element={<CreateAccount />} />
           <Route index element={<LogIn />} />
           <Route path="/login" element={<LogIn />} />
          
           <Route path="/create-schedule" element={<ScheduleManagementForm />} />
+          <Route path='/dashboard' element={<AdminDashboard/>}/>
           
           <Route element={<Layout />}>
             <Route path="scheduleAppt" element={<SchedulingAppt />} />
