@@ -606,7 +606,7 @@ class PatientsViewAppointments extends Component {
   };
 
   handleCancelOrDelete = (appointmentId, action) => {
-    console.log('Appointment ID:', appointmentId); // Debugging line
+    console.log('Appointment ID:', appointmentId); 
     if (!appointmentId) {
       this.setState({
         snackbarOpen: true,
@@ -618,8 +618,7 @@ class PatientsViewAppointments extends Component {
 
     const endpoint = action === 'cancel' ? 'cancelAppt' : 'deleteAppt';
     const url = `http://localhost:3001/${endpoint}?uid=${appointmentId}`;
-    console.log('Request URL:', url); // Debugging line
-
+    console.log('Request URL:', url); 
     fetch(url)
       .then((res) => {
         if (!res.ok) {
@@ -640,11 +639,11 @@ class PatientsViewAppointments extends Component {
             snackbarMessage: res.message,
             snackbarSeverity: 'success'
           });
-          this.fetchAppointments(); // Refresh the appointments list
+          this.fetchAppointments(); 
         }
       })
       .catch((error) => {
-        console.error('Error:', error); // Debugging line
+        console.error('Error:', error); 
         this.setState({
           snackbarOpen: true,
           snackbarMessage: 'Failed to perform action',
@@ -708,9 +707,9 @@ class PatientsViewAppointments extends Component {
                 </TableRow>
               ) : (
                 appointmentsState.map((appointment) => {
-                  console.log('Appointment Object:', appointment); // Debugging line
+                  console.log('Appointment Object:', appointment); 
                   return (
-                    <TableRow key={appointment.ID}> {/* Use appointment.ID */}
+                    <TableRow key={appointment.ID}> 
                       <TableCell>{new Date(appointment.theDate).toLocaleDateString()}</TableCell>
                       <TableCell>{appointment.theStart.substring(0, 5)}</TableCell>
                       <TableCell>{appointment.theEnd.substring(0, 5)}</TableCell>
