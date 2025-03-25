@@ -18,7 +18,7 @@ import Logo from '../assets/THIKA (2).jpg';
 
 const Header = () => {
   return (
-    <AppBar position="static" sx={{ boxShadow: 'none' }}>
+    <AppBar position="fixed" sx={{ boxShadow: 'none' }}>
       <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <img
           src= {Logo}
@@ -36,7 +36,7 @@ const Header = () => {
         >
           THIKA LEVEL 5 HMS
         </Typography>
-        <div style={{ width: '40px' }} /> {/* Spacer to keep the layout balanced */}
+        <div style={{ width: '40px' }} />
       </Toolbar>
     </AppBar>
   );

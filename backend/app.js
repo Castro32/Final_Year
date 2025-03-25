@@ -155,6 +155,7 @@ app.get('/OneHistory', async (req, res) => {
       p.email AS patient_email,
       p.address AS patient_address,
       p.gender AS patient_gender,
+      mh.date AS history_date,
       mh.conditions,
       mh.surgeries,
       mh.medication
