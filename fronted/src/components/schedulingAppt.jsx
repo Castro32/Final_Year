@@ -251,7 +251,7 @@ const checkAppointmentConflict = async (userEmail) => {
     email: userEmail,
     startTime: getFormattedTime(),
     date: getFormattedDate(),
-    docEmail: selectedDoctor
+    docName: selectedDoctor
   });
 
   const response = await fetch(`http://localhost:3001/checkIfApptExists?${params}`);

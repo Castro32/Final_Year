@@ -198,6 +198,7 @@ class ScheduleManagementForm extends Component {
     })
     .then(response => response.json())
     .then(data => {
+      console.log(data);
       if (data.success) {
         this.setState({ 
           success: true,

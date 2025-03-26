@@ -1251,6 +1251,7 @@ class PatientsViewAppointments extends Component {
         fetch(`http://localhost:3001/patientViewAppt?email=${email_in_use}`)
           .then((res) => res.json())
           .then((apptRes) => {
+            console.log("Fetched appointments:", apptRes);
             if (apptRes.error) {
               this.setState({ error: apptRes.error, loading: false });
             } else {
@@ -1276,8 +1277,7 @@ class PatientsViewAppointments extends Component {
     return {
       total: appointments.length,
       upcoming: appointments.filter(appt => 
-        appt.status === 'NotDone' && 
-        new Date(appt.theDate) > now
+        appt.status === 'NotDone'
       ).length,
       completed: appointments.filter(appt => 
         appt.status === 'Done'
@@ -1469,6 +1469,7 @@ class PatientsViewAppointments extends Component {
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Doctor</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Details</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
@@ -1489,6 +1490,7 @@ class PatientsViewAppointments extends Component {
                           {appointment.theStart.substring(0, 5)} - {appointment.theEnd.substring(0, 5)}
                         </Box>
                       </TableCell>
+                      <TableCell>{appointment.doctor || 'NO Doctor'}</TableCell>
                       <TableCell>
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 'bold' }}>

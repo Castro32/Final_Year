@@ -535,6 +535,7 @@ app.get('/patientViewAppt', (req, res) => {
                   patientsattendappointments.symptoms as theSymptoms,
                   appointment.date as theDate,
                   appointment.starttime as theStart,
+                  appointment.doctor as doctor,
                   appointment.endtime as theEnd,
                   appointment.status as status
                   FROM patientsattendappointments, appointment
@@ -608,10 +609,10 @@ app.get('/schedule', async (req, res) => {
 
     // Create the appointment
     const appointmentSql = `
-      INSERT INTO appointment (id, date, starttime, endtime, status)
-      VALUES (?, STR_TO_DATE(?, '%d/%m/%Y'), CONVERT(?, TIME), CONVERT(?, TIME), "NotDone")
+      INSERT INTO appointment (id, doctor, date, starttime, endtime, status)
+      VALUES (?,?, STR_TO_DATE(?, '%d/%m/%Y'), CONVERT(?, TIME), CONVERT(?, TIME), "NotDone")
     `;
-    await query(appointmentSql, [id, ndate, time, endTime]);
+    await query(appointmentSql, [id, doc, ndate, time, endTime]);
 
     // Create the diagnosis record
     const diagnosisSql = `
@@ -844,31 +845,28 @@ app.get('/doctorViewAppt', (req, res) => {
 //   });
 // });
 
+//delete appointment
 app.get('/deleteAppt', (req, res) => {
   const uid = req.query.uid;
   if (!uid) {
     return res.status(400).json({ error: 'Appointment ID is missing' });
   }
-
-  // Start transaction
   con.query('START TRANSACTION', async (transactionError) => {
     if (transactionError) {
       return res.status(500).json({ error: 'Error starting transaction' });
     }
 
     try {
-      // First delete from diagnose table
+     
       await query('DELETE FROM diagnose WHERE appt = ?', [uid]);
-      
-      // Then delete from patientsattendappointments
+
       await query('DELETE FROM patientsattendappointments WHERE appt = ?', [uid]);
-      
-      // Finally delete from appointment
+
       const result = await query('DELETE FROM appointment WHERE id = ? AND (status = \'Cancelled\' OR status = \'Done\')', [uid]);
 
       if (result.affectedRows === 0) {
         await query('ROLLBACK');
-        return res.status(400).json({ error: 'Appointment cannot be deleted. Ensure it is in Cancelled status.' });
+        return res.status(400).json({ error: 'Appointment cannot be deleted. Ensure it is in Cancelled or Done.' });
       }
 
       await query('COMMIT');
@@ -881,6 +879,8 @@ app.get('/deleteAppt', (req, res) => {
   });
 });
 
+
+//cancel appointment
 app.get('/cancelAppt', (req, res) => {
   const uid = req.query.uid;
   if (!uid) {
