@@ -1,3 +1,123 @@
+// import React, { useState, useEffect } from 'react';
+// import {
+//   Box,
+//   Typography,
+//   Container,
+//   Grid,
+//   AppBar,
+//   Paper,
+//   List,
+//   ListItem,
+//   ListItemText
+// } from '@mui/material';
+// import { createTheme, ThemeProvider } from '@mui/material/styles';
+// import { useNavigate, Outlet } from 'react-router-dom';
+
+// const theme = createTheme({
+//   palette: {
+//     primary: {
+//       main: '#000000',
+//     },
+//   },
+//   typography: {
+//     fontFamily: 'Lato',
+//   },
+// });
+
+// const SidebarButton = ({ label, ...rest }) => (
+//   <ListItem button {...rest}>
+//     <ListItemText primary={label} />
+//   </ListItem>
+// );
+
+// const SidebarButtons = ({ active, setActive, email }) => {
+//   const navigate = useNavigate();
+
+//   const handleClick = (label) => {
+//     setActive(label);
+//     if (label === "Schedule Appointment") {
+//       navigate("/scheduleAppt");
+//     } else if (label === "Sign Out") {
+//       fetch("http://localhost:3001/endSession");
+//       navigate("/");
+//     } else if (label === "View Appointments") {
+//       navigate("/PatientsViewAppt");
+//     } else if (label === "View Medical History") {
+//       navigate(`/ViewOneHistory/${email}`);
+//     } else if (label === "Settings") {
+//       navigate("/Settings");
+//     }
+//   };
+
+//   return (
+//     <ThemeProvider theme={theme}>
+//       <Paper
+//         sx={{
+//           height: '100vh',
+//           backgroundColor: '#f0f0f0',
+//           position: 'fixed',
+//           width: '200px',
+//           top: '64px', // Adjust based on the height of your navbar
+//           left: 0,
+//           overflowY: 'auto',
+//         }}
+//       >
+//         <List>
+//           {["View Medical History", "View Appointments", "Schedule Appointment", "Settings", "Sign Out"].map(label => (
+//             <SidebarButton
+//               key={label}
+//               style={{ marginTop: "20px" }}
+//               label={label}
+//               selected={label === active}
+//               onClick={() => handleClick(label)}
+//             />
+//           ))}
+//         </List>
+//       </Paper>
+//     </ThemeProvider>
+//   );
+// };
+
+// const Layout = () => {
+//   const [active, setActive] = useState();
+//   const [email, setEmail] = useState("");
+
+//   useEffect(() => {
+//     fetch("http://localhost:3001/userInSession")
+//       .then(res => res.json())
+//       .then(res => {
+//         setEmail(res.email);
+//       });
+//   }, []);
+
+//   const Header = () => (
+//     <AppBar position="static">
+//       {/* <Toolbar>
+//         <Typography variant="h6" component="a" href="/" style={{ color: 'inherit', textDecoration: 'inherit' }}>
+//           HMS
+//         </Typography>
+//       </Toolbar> */}
+//     </AppBar>
+//   );
+
+//   return (
+//     <ThemeProvider theme={theme}>
+//       <Container maxWidth={false} disableGutters>
+//         <Header />
+//         <Grid container>
+//           <Grid item xs={2}>
+//             <SidebarButtons active={active} setActive={setActive} email={email} />
+//           </Grid>
+//           <Grid item xs={10} sx={{ marginLeft: '200px', paddingTop: '64px' }}>
+//             <Outlet />
+//           </Grid>
+//         </Grid>
+//       </Container>
+//     </ThemeProvider>
+//   );
+// };
+
+// export default Layout;
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -8,25 +128,67 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  ListItemIcon,
+  Divider,
+  Avatar
 } from '@mui/material';
+import {
+  CalendarToday,
+  History,
+  ListAlt,
+  Settings,
+  ExitToApp,
+  Person
+} from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate, Outlet } from 'react-router-dom';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#000000',
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#f50057',
+    },
+    background: {
+      default: '#f5f5f5',
     },
   },
   typography: {
-    fontFamily: 'Lato',
+    fontFamily: 'Lato, Arial, sans-serif',
   },
 });
 
-const SidebarButton = ({ label, ...rest }) => (
-  <ListItem button {...rest}>
-    <ListItemText primary={label} />
+const SidebarButton = ({ label, icon, ...rest }) => (
+  <ListItem 
+    button 
+    {...rest}
+    sx={{
+      borderRadius: '8px',
+      margin: '4px 8px',
+      '&.Mui-selected': {
+        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+        '&:hover': {
+          backgroundColor: 'rgba(25, 118, 210, 0.2)',
+        }
+      },
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      }
+    }}
+  >
+    <ListItemIcon sx={{ minWidth: '40px', color: 'inherit' }}>
+      {icon}
+    </ListItemIcon>
+    <ListItemText 
+      primary={label} 
+      primaryTypographyProps={{
+        fontWeight: 'medium',
+        fontSize: '0.875rem'
+      }} 
+    />
   </ListItem>
 );
 
@@ -49,32 +211,55 @@ const SidebarButtons = ({ active, setActive, email }) => {
     }
   };
 
+  const menuItems = [
+    { label: "View Medical History", icon: <History /> },
+    { label: "View Appointments", icon: <ListAlt /> },
+    { label: "Schedule Appointment", icon: <CalendarToday /> },
+    { label: "Settings", icon: <Settings /> },
+    { label: "Sign Out", icon: <ExitToApp /> },
+  ];
+
   return (
-    <ThemeProvider theme={theme}>
-      <Paper
-        sx={{
-          height: '100vh',
-          backgroundColor: '#f0f0f0',
-          position: 'fixed',
-          width: '200px',
-          top: '64px', // Adjust based on the height of your navbar
-          left: 0,
-          overflowY: 'auto',
-        }}
-      >
-        <List>
-          {["View Medical History", "View Appointments", "Schedule Appointment", "Settings", "Sign Out"].map(label => (
-            <SidebarButton
-              key={label}
-              style={{ marginTop: "20px" }}
-              label={label}
-              selected={label === active}
-              onClick={() => handleClick(label)}
-            />
-          ))}
-        </List>
-      </Paper>
-    </ThemeProvider>
+    <Paper
+      sx={{
+        height: '100vh',
+        backgroundColor: 'white',
+        position: 'fixed',
+        width: '240px',
+        top: 0,
+        left: 0,
+        overflowY: 'auto',
+        boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+        borderRadius: 0,
+        borderRight: '1px solid #e0e0e0',
+      }}
+    >
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop:'55px' }}>
+        <Avatar sx={{ width: 64, height: 64, mb: 1, bgcolor: 'black' }}>
+          <Person sx={{ fontSize: 32 }} />
+        </Avatar>
+        <Typography variant="subtitle1" fontWeight="medium">
+          {email || 'User'}
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </Typography>
+      </Box>
+      
+      <Divider sx={{ my: 1 }} />
+      
+      <List sx={{ p: 1 }}>
+        {menuItems.map((item) => (
+          <SidebarButton
+            key={item.label}
+            label={item.label}
+            icon={item.icon}
+            selected={item.label === active}
+            onClick={() => handleClick(item.label)}
+          />
+        ))}
+      </List>
+    </Paper>
   );
 };
 
@@ -91,28 +276,34 @@ const Layout = () => {
   }, []);
 
   const Header = () => (
-    <AppBar position="static">
-      {/* <Toolbar>
-        <Typography variant="h6" component="a" href="/" style={{ color: 'inherit', textDecoration: 'inherit' }}>
-          HMS
+    <AppBar 
+      position="fixed" 
+      sx={{ 
+        width: 'calc(100% - 240px)', 
+        ml: '240px',
+        boxShadow: 'none',
+        borderBottom: '1px solid #e0e0e0',
+        backgroundColor: 'white',
+        color: 'text.primary'
+      }}
+    >
+      {/* <Box sx={{ height: '84px', display: 'flex', alignItems: 'center', px: 3 }}>
+        <Typography variant="h6" fontWeight="bold">
+          Patient Dashboard
         </Typography>
-      </Toolbar> */}
+      </Box> */}
     </AppBar>
   );
 
   return (
     <ThemeProvider theme={theme}>
-      <Container maxWidth={false} disableGutters>
-        <Header />
-        <Grid container>
-          <Grid item xs={2}>
-            <SidebarButtons active={active} setActive={setActive} email={email} />
-          </Grid>
-          <Grid item xs={10} sx={{ marginLeft: '200px', paddingTop: '64px' }}>
-            <Outlet />
-          </Grid>
-        </Grid>
-      </Container>
+      <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+        <SidebarButtons active={active} setActive={setActive} email={email} />
+        <Box component="main" sx={{ flexGrow: 1, p: 3, ml: '240px', pt: '80px' }}>
+          <Header />
+          <Outlet />
+        </Box>
+      </Box>
     </ThemeProvider>
   );
 };

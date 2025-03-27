@@ -964,7 +964,7 @@ const ViewOneHistory = () => {
     if (!patientData) return <div>No patient data found</div>;
 
     const Header = () => (
-        <AppBar position="static" color="primary" elevation={1}>
+        <AppBar position="static" elevation={1}>
             <Toolbar>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                 {patientData.patient_name}
@@ -981,7 +981,7 @@ const ViewOneHistory = () => {
             <CardContent>
                 <Grid container spacing={3} alignItems="center">
                     <Grid item xs={12} md={3} sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <Avatar sx={{ width: 120, height: 120, bgcolor: 'primary.main' }}>
+                        <Avatar sx={{ width: 120, height: 120, bgcolor: 'black' }}>
                             <PersonIcon sx={{ fontSize: 60 }} />
                         </Avatar>
                     </Grid>

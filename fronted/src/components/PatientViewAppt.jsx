@@ -1567,7 +1567,7 @@ class PatientsViewAppointments extends Component {
                   <Button 
                     variant="outlined" 
                     color="primary" 
-                    href="/book-appointment"
+                    href="/scheduleAppt"
                     sx={{ mt: 1 }}
                   >
                     Book Appointment

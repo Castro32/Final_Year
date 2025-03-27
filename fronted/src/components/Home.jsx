@@ -89,9 +89,9 @@ const Home = (email) => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Welcome Section */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+      {/* <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
         <Avatar sx={{ 
-          bgcolor: 'primary.main',
+          bgcolor: 'black',
           width: 64,
           height: 64,
           mr: 3
@@ -106,10 +106,10 @@ const Home = (email) => {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </Typography>
         </Box>
-      </Box>
+      </Box> */}
 
       {/* Quick Actions */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card 
             sx={{ 
@@ -182,7 +182,7 @@ const Home = (email) => {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
+      </Grid> */}
 
       {/* Upcoming Appointments */}
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
@@ -207,7 +207,10 @@ const Home = (email) => {
                           {appointment.theStart.substring(0, 5)} - {appointment.theEnd.substring(0, 5)}
                         </Typography>
                         <Typography variant="body2" sx={{ mt: 1 }}>
-                          {appointment.theConcerns || 'General checkup'}
+                          Concern: {appointment.theConcerns || 'General checkup'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                          Doctor: {appointment.doctor || 'doctor'}
                         </Typography>
                       </Box>
                       <Box>
@@ -247,7 +250,7 @@ const Home = (email) => {
               variant="text" 
               color="primary"
               endIcon={<Assignment />}
-              onClick={() => navigate('/view-appointments')}
+              onClick={() => navigate('/PatientsViewAppt')}
             >
               View All Appointments
             </Button>

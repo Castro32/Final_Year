@@ -128,7 +128,7 @@ import {
     Card,
     CardContent
 } from '@mui/material';
-import { Search, Notifications, AccountCircle, CalendarToday, AccessTime, MedicalServices } from '@mui/icons-material';
+import { Search, Notifications, AccountCircle, CalendarToday, AccessTime, MedicalServices, CancelOutlined, Done } from '@mui/icons-material';
 import { deepPurple } from '@mui/material/colors';
 
 export class DocViewAppt extends Component {
@@ -255,7 +255,8 @@ export class DocViewAppt extends Component {
                             <StatsCard 
                                 title="Cancelled" 
                                 value={cancelledAppointments}
-                                icon={<AccessTime fontSize="large" />} 
+                                // icon={<AccessTime fontSize="large" />} 
+                                icon={<CancelOutlined fontSize='large'/>}
                                 color="black" 
                             />
                         </Grid>
@@ -271,7 +272,8 @@ export class DocViewAppt extends Component {
                             <StatsCard 
                                 title="Completed" 
                                 value={completedAppointments} 
-                                icon={<MedicalServices fontSize="large" />} 
+                                // icon={<MedicalServices fontSize="large" />} 
+                                icon={<Done fontSize='large'/>}
                                 color="black" 
                             />
                         </Grid>
@@ -359,7 +361,7 @@ export class DocViewAppt extends Component {
                     <Paper sx={{ mt: 2 }}>
                         <TableContainer>
                             <Table>
-                                <TableHead sx={{ bgcolor: deepPurple[50] }}>
+                                <TableHead>
                                     <TableRow>
                                         <TableCell>Patient</TableCell>
                                         <TableCell>Appointment Details</TableCell>

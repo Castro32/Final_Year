@@ -212,7 +212,7 @@ const ViewMedHist = () => {
   );
 
   const StatsCard = ({ title, value, icon, color }) => (
-    <Card sx={{ minWidth: 120, bgcolor: color, color: 'white' }}>
+    <Card sx={{ minWidth: 120, bgcolor: 'black', color: 'white' }}>
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <div>
