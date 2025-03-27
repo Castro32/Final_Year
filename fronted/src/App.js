@@ -19,18 +19,21 @@ import ShowDiagnoses from './components/ShowDiagnoses';
 import Diagnose from './components/Diagnose';
 import DocLayout from './components/DocLayout';
 import AdminDashboard from './components/admindashboard';
+import AdminLogin from './components/adminLogin';
 
 function App() {
   return (
     <Router>
       <div>
         <Header />
+        
         <Routes>
-          <Route path='/admin' element={<AdminDashboard/>} />
+          <Route path='/admindashboard' element={<AdminDashboard/>} />
           <Route path="/MakeDoc" element={<MakeDoc />} />
           <Route path="/createAcc" element={<CreateAccount />} />
           <Route index element={<LogIn />} />
           <Route path="/login" element={<LogIn />} />
+          <Route path='/adminlogin' element={<AdminLogin/>}/>
          
           <Route path="/create-schedule" element={<ScheduleManagementForm />} />
           <Route path='/dashboard' element={<AdminDashboard/>}/>
