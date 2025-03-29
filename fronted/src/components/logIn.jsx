@@ -370,14 +370,51 @@ const LogIn = () => {
             }
             label="I'm a doctor"
           />
-          <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
+          {/* <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
             <Button variant="contained" color="primary" type="submit" style={{ margin: '1rem' }}>
               Log In
             </Button>
-            <Button variant="contained" color="default" href="/createAcc" style={{ margin: '0.5rem' }}>
-              Create Account
+            <Button variant="contained" color="default" href="/adminlogin" style={{ margin: '0.5rem' }}>
+              Admin
             </Button>
+            <p>This is for admin use only!!!</p>
+          </Box> */}
+          <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              type="submit" 
+              sx={{ marginBottom: '1.5rem' }} // Adds space below the Log In button
+            >
+              Log In
+            </Button>
+
+            <Button 
+              variant="contained" 
+              sx={{ 
+                backgroundColor: '#333', 
+                color: '#fff', 
+                '&:hover': { backgroundColor: '#555' }, 
+                padding: '10px 20px', 
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                marginBottom: '0.5rem'
+              }} 
+              href="/adminlogin"
+            >
+              Admin Panel
+            </Button>
+
+            <Typography 
+              variant="body2" 
+              color="error" 
+              fontWeight="bold"
+            >
+              This section is for admin use only!
+            </Typography>
           </Box>
+
         </form>
       </Box>
     </Container>

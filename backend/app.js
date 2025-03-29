@@ -342,6 +342,171 @@ app.get('/checkDoclogin', async (req, res) => {
   });
 });
 
+//admin login
+app.post('/api/admin-login', (req, res) => {
+  const { email, password } = req.body;
+  const statement = `SELECT * FROM admin WHERE EMAIL = ? AND PASSWORD = ?`;
+  
+  con.query(statement, [email, password], function (error, results, fields) {
+    if (error) {
+      console.error('Database error:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+    
+    if (results.length > 0) {
+      res.json({ message: 'Admin login successful' });
+    } else {
+      res.status(401).json({ message: 'Invalid admin credentials' });
+    }
+  });
+});
+
+// DELETE doctor
+app.delete('/api/doctor/:email', (req, res) => {
+  const { email } = req.params;
+  
+  con.query('START TRANSACTION', async (transactionError) => {
+    if (transactionError) {
+      return res.status(500).json({ error: 'Error starting transaction' });
+    }
+
+    try {
+      // First delete related records if needed (e.g., appointments, schedules)
+      // Example:
+      await query('DELETE FROM docshaveschedules WHERE doctor = ?', [email]);
+      
+      // Then delete the doctor
+      const result = await query('DELETE FROM doctor WHERE email = ?', [email]);
+      
+      if (result.affectedRows === 0) {
+        await query('ROLLBACK');
+        return res.status(404).json({ error: 'Doctor not found' });
+      }
+
+      await query('COMMIT');
+      res.json({ success: true, message: 'Doctor deleted successfully' });
+    } catch (error) {
+      await query('ROLLBACK');
+      console.error('Error deleting doctor:', error);
+      res.status(500).json({ error: 'Failed to delete doctor' });
+    }
+  });
+});
+
+// UPDATE doctor
+app.put('/api/doctor/:email', (req, res) => {
+  const { email } = req.params;
+  const { name, gender, password } = req.body;
+  
+  con.query('START TRANSACTION', async (transactionError) => {
+    if (transactionError) {
+      return res.status(500).json({ error: 'Error starting transaction' });
+    }
+
+    try {
+      let updateQuery = 'UPDATE doctor SET name = ?,  gender = ?';
+      let queryParams = [name, gender];
+      
+      if (password) {
+        // Hash password before storing
+        const hashedPassword = await bcrypt.hash(password, 10);
+        updateQuery += ', password = ?';
+        queryParams.push(hashedPassword);
+      }
+      
+      updateQuery += ' WHERE email = ?';
+      queryParams.push(email);
+      
+      const result = await query(updateQuery, queryParams);
+      
+      if (result.affectedRows === 0) {
+        await query('ROLLBACK');
+        return res.status(404).json({ error: 'Doctor not found' });
+      }
+
+      await query('COMMIT');
+      res.json({ success: true, message: 'Doctor updated successfully' });
+    } catch (error) {
+      await query('ROLLBACK');
+      console.error('Error updating doctor:', error);
+      res.status(500).json({ error: 'Failed to update doctor' });
+    }
+  });
+});
+// DELETE patient
+app.delete('/api/patient/:email', (req, res) => {
+  const { email } = req.params;
+  
+  con.query('START TRANSACTION', async (transactionError) => {
+    if (transactionError) {
+      return res.status(500).json({ error: 'Error starting transaction' });
+    }
+
+    try {
+      // First delete related records if needed (e.g., appointments, medical history)
+      // Example:
+      await query('DELETE FROM medicalhistory WHERE patient_email = ?', [email]);
+      await query('DELETE FROM patientsattendappointments WHERE patient = ?', [email]);
+      
+      // Then delete the patient
+      const result = await query('DELETE FROM patient WHERE email = ?', [email]);
+      
+      if (result.affectedRows === 0) {
+        await query('ROLLBACK');
+        return res.status(404).json({ error: 'Patient not found' });
+      }
+
+      await query('COMMIT');
+      res.json({ success: true, message: 'Patient deleted successfully' });
+    } catch (error) {
+      await query('ROLLBACK');
+      console.error('Error deleting patient:', error);
+      res.status(500).json({ error: 'Failed to delete patient' });
+    }
+  });
+});
+
+// UPDATE patient
+app.put('/api/patient/:email', (req, res) => {
+  const { email } = req.params;
+  const { name, gender, address, conditions, surgeries, medications, password } = req.body;
+  
+  con.query('START TRANSACTION', async (transactionError) => {
+    if (transactionError) {
+      return res.status(500).json({ error: 'Error starting transaction' });
+    }
+
+    try {
+      let updateQuery = 'UPDATE patient SET name = ?, gender = ?, address = ?, conditions = ?, surgeries = ?, medications = ?';
+      let queryParams = [name, gender, address, conditions, surgeries, medications];
+      
+      if (password) {
+        // Hash password before storing
+        const hashedPassword = await bcrypt.hash(password, 10);
+        updateQuery += ', password = ?';
+        queryParams.push(hashedPassword);
+      }
+      
+      updateQuery += ' WHERE email = ?';
+      queryParams.push(email);
+      
+      const result = await query(updateQuery, queryParams);
+      
+      if (result.affectedRows === 0) {
+        await query('ROLLBACK');
+        return res.status(404).json({ error: 'Patient not found' });
+      }
+
+      await query('COMMIT');
+      res.json({ success: true, message: 'Patient updated successfully' });
+    } catch (error) {
+      await query('ROLLBACK');
+      console.error('Error updating patient:', error);
+      res.status(500).json({ error: 'Failed to update patient' });
+    }
+  });
+});
+
 // Resets Patient Password
 app.post('/resetPasswordPatient', async (req, res) => {
   let something = req.query;
@@ -559,6 +724,7 @@ app.get('/checkIfHistory', (req, res) => {
     return res.json({ data: results });
   });
 });
+
 
 // Adds to PatientsAttendAppointment Table
 app.get('/addToPatientSeeAppt', async (req, res) => {

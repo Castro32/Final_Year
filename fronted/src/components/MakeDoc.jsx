@@ -49,7 +49,8 @@ export class MakeDoc extends Component {
 
   handleSubmit = (event) => {
     event.preventDefault();
-    const { firstName, lastName, gender, schedule, email, password } = this.state;
+    const { firstName, lastName, gender, email, password } = this.state;
+    const schedule = '5'; 
 
     fetch(`http://localhost:3001/checkIfDocExists?email=${email}`)
       .then(res => res.json())
@@ -67,7 +68,7 @@ export class MakeDoc extends Component {
             title: 'Account Created!',
             text: 'Your account has been created successfully.',
           }).then(() => {
-            window.location = "/login";
+            window.location = "/admindashboard";
           });
         }
       });
