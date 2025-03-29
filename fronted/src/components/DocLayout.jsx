@@ -57,7 +57,7 @@ const SidebarButtons = ({ active, setActive, email }) => {
           backgroundColor: '#f0f0f0',
           position: 'fixed',
           width: '200px',
-          top: '64px', // Adjust based on the height of your navbar
+          top: '64px',
           left: 0,
           overflowY: 'auto',
         }}

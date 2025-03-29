@@ -19,8 +19,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 
-
-
 const SchedulingAppt = () => {
   const [selectedDateTime, setSelectedDateTime] = useState(dayjs());
   const [concerns, setConcerns] = useState('');
@@ -77,137 +75,22 @@ const SchedulingAppt = () => {
     return true;
   };
 
-//   const handleSubmit = async (event) => {
-//     event.preventDefault();
-//     setError('');
-  
-//     if (!validateInputs()) {
-//       return;
-//     }
-  
-//     setLoading(true);
-  
-//     try {
-//       // Get user email
-//       const userResponse = await fetch("http://localhost:3001/userInSession");
-//       if (!userResponse.ok) {
-//         throw new Error('Failed to get user session');
-//       }
-//       const userData = await userResponse.json();
-//       const userEmail = userData.email;
-  
-//       console.log('User email from session:', userEmail); // Add this line for debugging
-  
-//       if (!userEmail) {
-//         throw new Error('User email not found');
-//       }
-  
-//       // Check for appointment clash
-//       const clashResponse = await fetch(`http://localhost:3001/checkIfApptExists?` + new URLSearchParams({
-//         email: userEmail,
-//         startTime: getFormattedTime(),
-//         date: getFormattedDate(),
-//         docEmail: selectedDoctor
-//       }));
-  
-//       if (!clashResponse.ok) {
-//         throw new Error('Failed to check appointment availability');
-//       }
-  
-//       const clashData = await clashResponse.json();
-//       if (clashData.data.length > 0) {
-//         setError("Appointment clash detected! Please select another time or doctor.");
-//         return;
-//       }
-  
-//       // Generate appointment ID
-//       // const uidResponse = await fetch("http://localhost:3001/genApptUID");
-//       // if (!uidResponse.ok) {
-//       //   throw new Error('Failed to generate appointment ID');
-//       // }
-//       // const uidData = await uidResponse.json();
-  
-//       // if (!uidData.id) {
-//       //   throw new Error('Invalid appointment ID generated');
-//       // }
-//       // Inside handleSubmit function
-// const uidResponse = await fetch("http://localhost:3001/genApptUID");
-// console.log('UID Response:', await uidResponse.clone().json()); // Add this line
 
-// if (!uidResponse.ok) {
-//   console.error('UID Response status:', uidResponse.status);
-//   console.error('UID Response statusText:', uidResponse.statusText);
-//   throw new Error('Failed to generate appointment ID');
-// }
-
-// const uidData = await uidResponse.json();
-// console.log('Generated UID data:', uidData); // Add this line
-
-// if (!uidData.id && uidData.id !== 0) { // Modified check to allow 0
-//   console.error('Invalid UID data:', uidData);
-//   throw new Error('Invalid appointment ID generated');
-// }
-  
-//       // Schedule appointment
-//       const scheduleResponse = await fetch(`http://localhost:3001/schedule?` + new URLSearchParams({
-//         time: getFormattedTime(),
-//         endTime: getFormattedEndTime(),
-//         date: getFormattedDate(),
-//         concerns: concerns.trim(),
-//         symptoms: symptoms.trim(),
-//         id: uidData.id,
-//         doc: selectedDoctor
-//       }));
-  
-//       if (!scheduleResponse.ok) {
-//         throw new Error('Failed to schedule appointment');
-//       }
-  
-//       // Link to patient
-//       const patientApptResponse = await fetch(`http://localhost:3001/addToPatientSeeAppt?` + new URLSearchParams({
-//         email: userEmail,
-//         id: uidData.id,
-//         concerns: concerns.trim(),
-//         symptoms: symptoms.trim()
-//       }));
-  
-//       if (!patientApptResponse.ok) {
-//         throw new Error('Failed to link appointment to patient');
-//       }
-  
-//       alert("Appointment successfully scheduled!");
-//       // Reset form
-//       setSelectedDateTime(dayjs());
-//       setConcerns('');
-//       setSymptoms('');
-//       setSelectedDoctor('');
-  
-//     } catch (error) {
-//       console.error('Error scheduling appointment:', error);
-//       setError(error.message || 'Failed to schedule appointment. Please try again.');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
 const handleSubmit = async (event) => {
   event.preventDefault();
   setError('');
   setLoading(true);
 
   try {
-    // Basic input validation
     if (!validateInputs()) {
       setLoading(false);
       return;
     }
-
-    // Get user session info
     const userEmail = await getUserEmail();
     if (!userEmail) {
       throw new Error('User not logged in or session expired');
     }
 
-    // Check for appointment conflicts
     const hasConflict = await checkAppointmentConflict(userEmail);
     if (hasConflict) {
       setError("Appointment clash detected! Please select another time or doctor.");
@@ -215,16 +98,12 @@ const handleSubmit = async (event) => {
       return;
     }
 
-    // Generate appointment ID
     const appointmentId = await generateAppointmentId();
 
-    // Schedule the appointment
     await scheduleAppointment(appointmentId);
 
-    // Link appointment to patient
     await linkAppointmentToPatient(appointmentId, userEmail);
 
-    // Success! Reset form and notify user
     resetForm();
     alert("Appointment successfully scheduled!");
 
@@ -236,7 +115,6 @@ const handleSubmit = async (event) => {
   }
 };
 
-// Helper functions
 const getUserEmail = async () => {
   const response = await fetch("http://localhost:3001/userInSession");
   if (!response.ok) {
@@ -278,22 +156,6 @@ const generateAppointmentId = async () => {
   return data.id;
 };
 
-// const scheduleAppointment = async (appointmentId) => {
-//   const params = new URLSearchParams({
-//     time: getFormattedTime(),
-//     endTime: getFormattedEndTime(),
-//     date: getFormattedDate(),
-//     concerns: concerns.trim(),
-//     symptoms: symptoms.trim(),
-//     id: appointmentId,
-//     doc: selectedDoctor
-//   });
-
-//   const response = await fetch(`http://localhost:3001/schedule?${params}`);
-//   if (!response.ok) {
-//     throw new Error('Failed to schedule appointment');
-//   }
-// };
 const scheduleAppointment = async (appointmentId) => {
   console.log('Scheduling appointment with ID:', appointmentId);
   
@@ -311,14 +173,10 @@ const scheduleAppointment = async (appointmentId) => {
   
   if (!response.ok) {
     if (response.status === 409) {
-      // If we get a conflict, try to get a new ID and retry once
       console.log('Appointment ID conflict, generating new ID...');
       const newId = await generateAppointmentId();
-      
-      // Update params with new ID
+
       params.set('id', newId);
-      
-      // Retry the request
       const retryResponse = await fetch(`http://localhost:3001/schedule?${params}`);
       if (!retryResponse.ok) {
         const errorData = await retryResponse.json().catch(() => ({}));

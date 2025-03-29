@@ -20,10 +20,8 @@ const con = mysql.createConnection({
   multipleStatements: true
 });
 
-// Promisify the query method
 const query = util.promisify(con.query).bind(con);
 
-// Connecting To Database
 con.connect(function (err) {
   if (err) {
     console.error('Database connection error:', err);
@@ -32,7 +30,6 @@ con.connect(function (err) {
   console.log("Connected to MySQL");
 });
 
-// Variables to keep state info about who is logged in
 let email_in_use = "";
 let password_in_use = "";
 let who = "";
@@ -47,7 +44,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
-// Signup, Login, Password Reset Related Queries
 
 // Checks if patient exists in database
 app.get('/checkIfPatientExists', (req, res) => {
@@ -64,19 +60,12 @@ app.get('/checkIfPatientExists', (req, res) => {
 // Fetch all patients
 app.get('/getAllPatients', async (req, res) => {
   try {
-    // Query to select all patients from the patient table
     const statement = `SELECT * FROM patient`;
     console.log(statement);
-
-    // Execute the query
     const results = await query(statement);
-
-    // Check if any patients were found
     if (results.length === 0) {
       return res.status(404).json({ error: 'No patients found' });
     }
-
-    // Return the list of patients
     return res.json({ data: results });
   } catch (error) {
     console.error('Error fetching patients:', error);
@@ -143,8 +132,6 @@ app.get('/makeAccount', async (req, res) => {
 // To return a particular patient history
 app.get('/OneHistory', async (req, res) => {
   const patientEmail = req.query.patientEmail;
-
-  // Validate the email parameter
   if (!patientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientEmail)) {
     return res.status(400).json({ error: 'Invalid or missing patientEmail' });
   }
@@ -184,8 +171,6 @@ app.get('/OneHistory', async (req, res) => {
 // To show all diagnosed appointments till now
 app.get('/allDiagnoses', async (req, res) => {
   const patientEmail = req.query.patientEmail;
-
-  // Validate the email parameter
   if (!patientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientEmail)) {
     return res.status(400).json({ error: 'Invalid or missing patientEmail' });
   }
@@ -242,7 +227,6 @@ app.get('/makeDocAccount', async (req, res) => {
   let schedule = params.schedule;
 
   try {
-    // First check if schedule exists
     const checkScheduleSql = 'SELECT id FROM schedule WHERE id = ?';
     const scheduleExists = await query(checkScheduleSql, [schedule]);
 
@@ -251,18 +235,13 @@ app.get('/makeDocAccount', async (req, res) => {
         error: 'Invalid schedule ID. Schedule must exist before assigning to doctor.'
       });
     }
-
-    // If schedule exists, proceed with doctor creation
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert doctor
     const insertDoctorSql = `
       INSERT INTO doctor (email, gender, password, name)
       VALUES (?, ?, ?, ?)
     `;
     await query(insertDoctorSql, [email, gender, hashedPassword, name]);
-
-    // Link doctor to schedule
     const linkScheduleSql = `
       INSERT INTO docshaveschedules (sched, doctor)
       VALUES (?, ?)
@@ -371,11 +350,7 @@ app.delete('/api/doctor/:email', (req, res) => {
     }
 
     try {
-      // First delete related records if needed (e.g., appointments, schedules)
-      // Example:
       await query('DELETE FROM docshaveschedules WHERE doctor = ?', [email]);
-      
-      // Then delete the doctor
       const result = await query('DELETE FROM doctor WHERE email = ?', [email]);
       
       if (result.affectedRows === 0) {
@@ -408,7 +383,6 @@ app.put('/api/doctor/:email', (req, res) => {
       let queryParams = [name, gender];
       
       if (password) {
-        // Hash password before storing
         const hashedPassword = await bcrypt.hash(password, 10);
         updateQuery += ', password = ?';
         queryParams.push(hashedPassword);
@@ -443,12 +417,9 @@ app.delete('/api/patient/:email', (req, res) => {
     }
 
     try {
-      // First delete related records if needed (e.g., appointments, medical history)
-      // Example:
       await query('DELETE FROM medicalhistory WHERE patient_email = ?', [email]);
       await query('DELETE FROM patientsattendappointments WHERE patient = ?', [email]);
       
-      // Then delete the patient
       const result = await query('DELETE FROM patient WHERE email = ?', [email]);
       
       if (result.affectedRows === 0) {
@@ -466,10 +437,9 @@ app.delete('/api/patient/:email', (req, res) => {
   });
 });
 
-// UPDATE patient
 app.put('/api/patient/:email', (req, res) => {
   const { email } = req.params;
-  const { name, gender, address, conditions, surgeries, medications, password } = req.body;
+  const { name, gender, address, conditions, surgeries, medication, password } = req.body;
   
   con.query('START TRANSACTION', async (transactionError) => {
     if (transactionError) {
@@ -477,32 +447,52 @@ app.put('/api/patient/:email', (req, res) => {
     }
 
     try {
-      let updateQuery = 'UPDATE patient SET name = ?, gender = ?, address = ?, conditions = ?, surgeries = ?, medications = ?';
-      let queryParams = [name, gender, address, conditions, surgeries, medications];
+      let updatePatientQuery = 'UPDATE patient SET name = ?, gender = ?, address = ?';
+      let patientParams = [name, gender, address];
       
       if (password) {
-        // Hash password before storing
         const hashedPassword = await bcrypt.hash(password, 10);
-        updateQuery += ', password = ?';
-        queryParams.push(hashedPassword);
+        updatePatientQuery += ', password = ?';
+        patientParams.push(hashedPassword);
       }
       
-      updateQuery += ' WHERE email = ?';
-      queryParams.push(email);
+      updatePatientQuery += ' WHERE email = ?';
+      patientParams.push(email);
       
-      const result = await query(updateQuery, queryParams);
+      const patientResult = await query(updatePatientQuery, patientParams);
       
-      if (result.affectedRows === 0) {
+      if (patientResult.affectedRows === 0) {
         await query('ROLLBACK');
         return res.status(404).json({ error: 'Patient not found' });
       }
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      // First check if a medical history record exists for this patient
+      const checkHistoryQuery = 'SELECT * FROM medicalhistory WHERE patient_email = ?';
+      const existingHistory = await query(checkHistoryQuery, [email]);
+      
+      let historyResult;
+      if (existingHistory.length > 0) {
+        historyResult = await query(
+          `UPDATE medicalhistory 
+           SET date = ?, conditions = ?, surgeries = ?, medication = ?
+           WHERE patient_email = ?`,
+          [currentDate, conditions, surgeries, medication, email]
+        );
+      } else {
+        historyResult = await query(
+          `INSERT INTO medicalhistory (date, patient_email, conditions, surgeries, medication) 
+           VALUES (?, ?, ?, ?, ?)`,
+          [currentDate, email, conditions, surgeries, medication]
+        );
+      }
 
       await query('COMMIT');
-      res.json({ success: true, message: 'Patient updated successfully' });
+      res.json({ success: true, message: 'Patient and medical history updated successfully' });
     } catch (error) {
       await query('ROLLBACK');
       console.error('Error updating patient:', error);
-      res.status(500).json({ error: 'Failed to update patient' });
+      res.status(500).json({ error: 'Failed to update patient and medical history' });
     }
   });
 });
@@ -627,8 +617,6 @@ app.get('/checkIfApptExists', (req, res) => {
       con.query(statement, function (error, results, fields) {
         if (error) throw error;
         cond3 = results;
-
-        // Combine all conditions
         let allConditions = cond1.concat(cond2, cond3);
         return res.json({ data: allConditions });
       });
@@ -664,7 +652,7 @@ app.get('/docInfo', (req, res) => {
   });
 });
 
-// To show all patients whose medical history can be accessed
+// show all patients whose medical history can be accessed
 app.get('/MedHistView', (req, res) => {
   let params = req.query;
   let patientName = "'%" + params.name + "%'";
@@ -734,7 +722,6 @@ app.get('/addToPatientSeeAppt', async (req, res) => {
   let concerns = params.concerns;
   let symptoms = params.symptoms;
 
-  // Validate that the patient email exists
   const patientCheckSql = `SELECT * FROM patient WHERE email = ?`;
   const patientCheckResults = await query(patientCheckSql, [email]);
 
@@ -742,7 +729,6 @@ app.get('/addToPatientSeeAppt', async (req, res) => {
     return res.status(400).json({ error: 'Invalid patient email' });
   }
 
-  // Insert into patientsattendappointments
   const sql_try = `INSERT INTO patientsattendappointments (patient, appt, concerns, symptoms)
                    VALUES (?, ?, ?, ?)`;
   try {
@@ -760,10 +746,8 @@ app.get('/schedule', async (req, res) => {
     const { time, endTime, date, concerns, symptoms, id, doc } = req.query;
     const ndate = new Date(date).toLocaleDateString().substring(0, 10);
 
-    // Start transaction
     await query('START TRANSACTION');
 
-    // Verify the ID doesn't already exist
     const existingAppt = await query('SELECT id FROM appointment WHERE id = ?', [id]);
     if (existingAppt.length > 0) {
       await query('ROLLBACK');
@@ -772,27 +756,23 @@ app.get('/schedule', async (req, res) => {
         details: 'Cannot create duplicate appointment ID'
       });
     }
-
-    // Create the appointment
     const appointmentSql = `
       INSERT INTO appointment (id, doctor, date, starttime, endtime, status)
       VALUES (?,?, STR_TO_DATE(?, '%d/%m/%Y'), CONVERT(?, TIME), CONVERT(?, TIME), "NotDone")
     `;
     await query(appointmentSql, [id, doc, ndate, time, endTime]);
 
-    // Create the diagnosis record
     const diagnosisSql = `
       INSERT INTO diagnose (appt, doctor, diagnosis, prescription)
       VALUES (?, ?, "Not Yet Diagnosed", "Not Yet Diagnosed")
     `;
     await query(diagnosisSql, [id, doc]);
 
-    // Commit transaction
     await query('COMMIT');
 
     res.json({ success: true });
   } catch (error) {
-    // Rollback on error
+
     await query('ROLLBACK');
     console.error('Error scheduling appointment:', error);
     res.status(500).json({
@@ -807,13 +787,12 @@ app.get('/genApptUID', async (req, res) => {
   try {
     console.log('Generating appointment UID...');
 
-    // Begin transaction
     await query('START TRANSACTION');
 
     const statement = `
       SELECT COALESCE(MAX(id), 0) + 1 as next_id
       FROM appointment
-      FOR UPDATE`; // Add FOR UPDATE to lock the row
+      FOR UPDATE`; 
 
     console.log('Executing query:', statement);
 
@@ -848,14 +827,12 @@ app.get('/genApptUID', async (req, res) => {
       });
     }
 
-    // Commit the transaction
     await query('COMMIT');
 
     console.log('Generated ID:', next_id);
     return res.json({ id: next_id.toString() });
 
   } catch (error) {
-    // Rollback on error
     await query('ROLLBACK');
     console.error('Error in genApptUID:', error);
     return res.status(500).json({
@@ -909,107 +886,6 @@ app.get('/doctorViewAppt', (req, res) => {
   });
 });
 
-// To delete appointment
-// app.get('/deleteAppt', (req, res) => {
-//   let a = req.query;
-//   let uid = a.uid;
-//   let statement = `SELECT status FROM appointment WHERE id=${uid};`;
-//   console.log(statement);
-//   con.query(statement, function (error, results, fields) {
-//     if (error) throw error;
-//     results = results[0].status;
-//     if (results == "NotDone") {
-//       statement = `DELETE FROM appointment WHERE id=${uid};`;
-//       console.log(statement);
-//       con.query(statement, function (error, results, fields) {
-//         if (error) throw error;
-//       });
-//     } else {
-//       if (who == "pat") {
-//         statement = `DELETE FROM patientsattendappointments p WHERE p.appt = ${uid}`;
-//         console.log(statement);
-//         con.query(statement, function (error, results, fields) {
-//           if (error) throw error;
-//         });
-//       }
-//     }
-//   });
-//   return;
-// });
-
-// app.get('/deleteAppt', (req, res) => {
-//   let a = req.query;
-//   let uid = a.uid;
-//   let who = a.who; // Assuming you pass 'who' as a query parameter
-
-//   let statement = `SELECT status FROM appointment WHERE id=${uid};`;
-//   console.log(statement);
-
-//   con.query(statement, function (error, results, fields) {
-//     if (error) {
-//       console.error(error);
-//       return res.status(500).send('Error fetching appointment status');
-//     }
-
-//     if (results.length === 0) {
-//       return res.status(404).send('Appointment not found');
-//     }
-
-//     let status = results[0].status;
-
-//     if (status === "NotDone") {
-//       // Delete the appointment if it's not done
-//       statement = `DELETE FROM appointment WHERE id=${uid};`;
-//       console.log(statement);
-
-//       con.query(statement, function (error, results, fields) {
-//         if (error) {
-//           console.error(error);
-//           return res.status(500).send('Error deleting appointment');
-//         }
-//         return res.status(200).send('Appointment deleted successfully');
-//       });
-//     } else {
-//       if (who === "pat") {
-//         // Delete the association in patientsattendappointments
-//         statement = `DELETE FROM patientsattendappointments WHERE appt = ${uid}`;
-//         console.log(statement);
-
-//         con.query(statement, function (error, results, fields) {
-//           if (error) {
-//             console.error(error);
-//             return res.status(500).send('Error deleting patient appointment association');
-//           }
-//           return res.status(200).send('Patient appointment association deleted successfully');
-//         });
-//       } else {
-//         return res.status(400).send('Invalid request');
-//       }
-//     }
-//   });
-// });
-// app.get('/deleteAppt', (req, res) => {
-//   const uid = req.query.uid;
-//   if (!uid) {
-//     return res.status(400).json({ error: 'Appointment ID is missing' });
-//   }
-
-//   const statement = `
-//     DELETE FROM appointment
-//     WHERE ID = ? AND status = 'Cancelled';
-//   `;
-
-//   con.query(statement, [uid], (error, results) => {
-//     if (error) {
-//       console.error(error);
-//       return res.status(500).json({ error: 'Error deleting appointment' });
-//     }
-//     if (results.affectedRows === 0) {
-//       return res.status(400).json({ error: 'Appointment cannot be deleted' });
-//     }
-//     res.json({ message: 'Appointment deleted successfully' });
-//   });
-// });
 
 //delete appointment
 app.get('/deleteAppt', (req, res) => {
@@ -1070,7 +946,7 @@ app.get('/cancelAppt', (req, res) => {
     res.json({ message: 'Appointment cancelled successfully' });
   });
 });
-// If 404, forward to error handler
+
 app.use(function (req, res, next) {
   console.log(`404 Not Found: ${req.originalUrl}`);
   next(createError(404));
@@ -1078,11 +954,9 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // send JSON response
   res.status(err.status || 500).json({
     message: err.message,
     error: res.locals.error
