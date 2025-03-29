@@ -1,347 +1,408 @@
 import React, { Component } from 'react';
 import {
-    Box,
-    Button,
-    Typography,
-    AppBar,
-    Toolbar,
-    Container,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Grid,
-    TextField,
-    MenuItem,
-    Avatar,
-    IconButton,
-    Chip,
-    Divider,
-    Card,
-    CardContent
+  Box,
+  Button,
+  Typography,
+  AppBar,
+  Container,
+  Table,
+  TableBody,
+  TableCell,
+  Toolbar,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Grid,
+  TextField,
+  MenuItem,
+  Avatar,
+  Chip,
+  Divider,
+  Card,
+  CardContent,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { Search, Notifications, AccountCircle, CalendarToday, AccessTime, MedicalServices, CancelOutlined, Done } from '@mui/icons-material';
+import {
+  Search,
+  CalendarToday,
+  AccessTime,
+  MedicalServices,
+  CancelOutlined,
+  Done,
+  PictureAsPdf,
+  Download,
+  Refresh
+} from '@mui/icons-material';
 import { deepPurple } from '@mui/material/colors';
+import { jsPDF } from 'jspdf';
 
-export class DocViewAppt extends Component {
-    state = { 
-        apptlist: [],
-        searchTerm: '',
-        filterStatus: 'all',
-        upcomingOnly: false
+class DocViewAppt extends Component {
+  state = {
+    apptlist: [],
+    searchTerm: '',
+    filterStatus: 'all',
+    isLoading: false,
+    error: null
+  };
+
+  componentDidMount() {
+    this.fetchAppointments();
+  }
+
+  fetchAppointments = () => {
+    this.setState({ isLoading: true, error: null });
+    fetch('http://localhost:3001/doctorViewAppt')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch appointments');
+        return res.json();
+      })
+      .then(res => this.setState({ apptlist: res.data || [], isLoading: false }))
+      .catch(error => this.setState({ error, isLoading: false }));
+  };
+
+  handleSearchChange = (event) => {
+    this.setState({ searchTerm: event.target.value });
+  };
+
+  handleStatusFilter = (event) => {
+    this.setState({ filterStatus: event.target.value });
+  };
+
+  filterAppointments = () => {
+    const { apptlist, searchTerm, filterStatus } = this.state;
+    const today = new Date();
+    
+    return apptlist.filter(appt => {
+      const matchesSearch = 
+        appt.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        appt.concerns?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        appt.symptoms?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = 
+        filterStatus === 'all' || 
+        appt.status?.toLowerCase() === filterStatus.toLowerCase();
+      
+      return matchesSearch && matchesStatus;
+    });
+  };
+
+generatePatientReport = (appointment) => {
+    const doc = new jsPDF();
+  
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 53, 147);
+    doc.text('THIKA LEVEL 5 HOSPITAL', 105, 20, { align: 'center' });
+  
+    doc.setFontSize(16);
+    doc.setTextColor(40, 53, 147);
+    doc.text('PATIENT MEDICAL REPORT', 105, 30, { align: 'center' });
+  
+    // Patient Information
+    doc.setFontSize(12);
+    doc.setTextColor(40, 53, 147);
+    doc.text('PATIENT INFORMATION', 20, 45);
+    doc.line(20, 47, 60, 47);
+  
+    doc.setTextColor(0, 0, 0); 
+    doc.text(`Name: ${appointment.name || 'N/A'}`, 20, 55);
+    doc.text(`Patient ID: ${appointment.id || 'N/A'}`, 20, 65);
+    doc.text(`Gender: ${appointment.gender || 'Not specified'}`, 20, 85);
+  
+    // Appointment Details
+    doc.setTextColor(40, 53, 147);
+    doc.text('APPOINTMENT DETAILS', 20, 105);
+    doc.line(20, 107, 60, 107);
+  
+    doc.setTextColor(0, 0, 0); 
+    doc.text(`Date: ${new Date(appointment.date).toLocaleDateString() || 'N/A'}`, 20, 115);
+    doc.text(`Time: ${appointment.starttime || 'N/A'}`, 20, 125);
+    doc.text(`Status: ${appointment.status || 'N/A'}`, 20, 135);
+  
+    // Medical Information
+    doc.setTextColor(40, 53, 147);
+    doc.text('MEDICAL INFORMATION', 20, 155);
+    doc.line(20, 157, 60, 157);
+  
+    doc.setTextColor(0, 0, 0); 
+    doc.text(`Primary Concerns: ${appointment.concerns || 'N/A'}`, 20, 165);
+    doc.text(`Symptoms: ${appointment.symptoms || 'N/A'}`, 20, 175);
+  
+    // Diagnosis & Treatment
+    doc.setTextColor(40, 53, 147);
+    doc.text('DIAGNOSIS & TREATMENT', 20, 195);
+    doc.line(20, 197, 70, 197);
+  
+    doc.setTextColor(0, 0, 0); 
+    if (appointment.diagnosis) {
+      doc.text(`Diagnosis: ${appointment.diagnosis}`, 20, 205);
+      doc.text(`Prescription: ${appointment.prescription || 'N/A'}`, 20, 215);
+      doc.text(`Treatment Plan: ${appointment.treatmentPlan || 'N/A'}`, 20, 225);
+      doc.text(`Notes: ${appointment.notes || 'N/A'}`, 20, 235);
+    } else {
+      doc.text('Diagnosis: Not yet diagnosed', 20, 205);
     }
+  
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('This document was generated electronically and is valid without signature', 105, 280, { align: 'center' });
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
+  
+    doc.save(`Medical_Report_${appointment.name}_${appointment.id}.pdf`);
+  };
+  render() {
+    const { searchTerm, filterStatus, isLoading, error } = this.state;
+    const filteredAppointments = this.filterAppointments();
 
-    componentDidMount() {
-        this.getNames();
-    }
-
-    getNames() {
-        fetch('http://localhost:3001/doctorViewAppt')
-        .then(res => res.json())
-        .then(res => this.setState({ apptlist: res.data }));
-    }
-
-    handleSearchChange = (event) => {
-        this.setState({ searchTerm: event.target.value });
+    const appointmentStats = {
+      total: this.state.apptlist.length,
+      pending: this.state.apptlist.filter(a => a.status === 'NotDone').length,
+      completed: this.state.apptlist.filter(a => a.status === 'Done').length,
+      cancelled: this.state.apptlist.filter(a => a.status === 'Cancelled').length
     };
 
-    handleStatusFilter = (event) => {
-        this.setState({ filterStatus: event.target.value });
-    };
+    return (
+      <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+        <AppBar position="static" color="primary">
+          {/* <Toolbar>
+            <MedicalServices sx={{ mr: 2 }} />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Doctor Appointment Dashboard
+            </Typography>
+            <Tooltip title="Refresh appointments">
+              <IconButton color="inherit" onClick={this.fetchAppointments}>
+                <Refresh />
+              </IconButton>
+            </Tooltip>
+          </Toolbar> */}
+        </AppBar>
 
-    toggleUpcoming = () => {
-        this.setState(prevState => ({ upcomingOnly: !prevState.upcomingOnly }));
-    };
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Patient Appointments
+            </Typography>
 
-    filterAppointments = () => {
-        const { apptlist, searchTerm, filterStatus, upcomingOnly } = this.state;
-        const today = new Date();
-        
-        return apptlist.filter(appt => {
-            const matchesSearch = 
-                appt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                appt.concerns.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                appt.symptoms.toLowerCase().includes(searchTerm.toLowerCase());
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Total Appointments" 
+                  value={appointmentStats.total} 
+                  icon={<CalendarToday fontSize="large" />}
+                  color="black"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Pending" 
+                  value={appointmentStats.pending} 
+                  icon={<AccessTime fontSize="large" />}
+                  color="black"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Completed" 
+                  value={appointmentStats.completed} 
+                  icon={<Done fontSize="large" />}
+                  color="black"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard 
+                  title="Cancelled" 
+                  value={appointmentStats.cancelled} 
+                  icon={<CancelOutlined fontSize="large" />}
+                  color="black"
+                />
+              </Grid>
+            </Grid>
 
-            const matchesStatus = 
-                filterStatus === 'all' || 
-                appt.status.toLowerCase() === filterStatus.toLowerCase();
-
-            const isUpcoming = new Date(appt.date) >= today;
-            const matchesUpcoming = !upcomingOnly || isUpcoming;
-            
-            return matchesSearch && matchesStatus && matchesUpcoming;
-        });
-    };
-
-    render() {
-        const { searchTerm, filterStatus, upcomingOnly } = this.state;
-        const filteredAppointments = this.filterAppointments();
-
-        const Header = () => (
-            <AppBar position="static" >
-                {/* <Toolbar>
-                    <MedicalServices sx={{ mr: 2 }} />
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Doctor Dashboard
-                    </Typography>
-                    <IconButton color="inherit">
-                        <Notifications />
-                    </IconButton>
-                    <IconButton color="inherit">
-                        <AccountCircle />
-                    </IconButton>
-                </Toolbar> */}
-            </AppBar>
-        );
-
-        const StatsCard = ({ title, value, icon, color }) => (
-            <Card sx={{ minWidth: 200, bgcolor: color, color: 'white' }}>
-                <CardContent>
-                    <Box display="flex" alignItems="center" justifyContent="space-between">
-                        <div>
-                            <Typography variant="h5" component="div">
-                                <MedicalServices sx={{ mr: 2 }} />
-                                {value}
-                            </Typography>
-                            <Typography variant="body2">
-                                {title}
-                            </Typography>
-                        </div>
-                        {icon}
-                    </Box>
-                </CardContent>
-            </Card>
-        );
-
-        const DashboardStats = () => {
-            const totalAppointments = this.state.apptlist.length;
-            const upcomingAppointments = this.state.apptlist.filter(appt => 
-                appt.status === 'NotDone'
-            ).length;
-            const cancelledAppointments = this.state.apptlist.filter(appt =>
-                appt.status === 'Cancelled'
-            ).length;
-            const completedAppointments = this.state.apptlist.filter(appt => 
-                appt.status === 'Done'
-            ).length;
-            
-            return (
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h6" gutterBottom>
-                        Appointment Overview
-                    </Typography>
-                    <Grid container spacing={3}>
-                        <Grid item>
-                            <StatsCard 
-                                title="Total Appointments" 
-                                value={totalAppointments} 
-                                icon={<CalendarToday fontSize="large" />} 
-                                color="black" 
-                            />
-                        </Grid>
-                        <Grid item>
-                            <StatsCard 
-                                title="Cancelled" 
-                                value={cancelledAppointments}
-                                // icon={<AccessTime fontSize="large" />} 
-                                icon={<CancelOutlined fontSize='large'/>}
-                                color="black" 
-                            />
-                        </Grid>
-                        <Grid item>
-                            <StatsCard 
-                                title="Upcoming" 
-                                value={upcomingAppointments}
-                                icon={<AccessTime fontSize="large" />} 
-                                color="black" 
-                            />
-                        </Grid>
-                        <Grid item>
-                            <StatsCard 
-                                title="Completed" 
-                                value={completedAppointments} 
-                                // icon={<MedicalServices fontSize="large" />} 
-                                icon={<Done fontSize='large'/>}
-                                color="black" 
-                            />
-                        </Grid>
-                    </Grid>
-                </Box>
-            );
-        };
-
-        const Filters = () => (
-            <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={4}>
-                        <TextField
-                            fullWidth
-                            label="Search Appointments"
-                            variant="outlined"
-                            value={searchTerm}
-                            onChange={this.handleSearchChange}
-                            InputProps={{
-                                startAdornment: <Search sx={{ mr: 1 }} />
-                            }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <TextField
-                            select
-                            fullWidth
-                            label="Filter by Status"
-                            value={filterStatus}
-                            onChange={this.handleStatusFilter}
-                        >
-                            <MenuItem value="all">All Statuses</MenuItem>
-                            <MenuItem value="NotDone">Pending</MenuItem>
-                            <MenuItem value="Done">Completed</MenuItem>
-                            <MenuItem value="Cancelled">Cancelled</MenuItem>
-                        </TextField>
-                    </Grid>
-                    {/* <Grid item xs={12} sm={3}>
-                        <Button
-                            fullWidth
-                            variant={upcomingOnly ? "contained" : "outlined"}
-                            color="primary"
-                            onClick={this.toggleUpcoming}
-                            startIcon={<CalendarToday />}
-                        >
-                            {upcomingOnly ? "Showing Upcoming" : "Show All"}
-                        </Button>
-                    </Grid> */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Search patients or symptoms"
+                    variant="outlined"
+                    value={searchTerm}
+                    onChange={this.handleSearchChange}
+                    InputProps={{
+                      startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />
+                    }}
+                  />
                 </Grid>
-            </Box>
-        );
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Filter by status"
+                    value={filterStatus}
+                    onChange={this.handleStatusFilter}
+                  >
+                    <MenuItem value="all">All Appointments</MenuItem>
+                    <MenuItem value="NotDone">Pending</MenuItem>
+                    <MenuItem value="Done">Completed</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={2}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="primary"
+                    onClick={this.fetchAppointments}
+                    startIcon={<Refresh />}
+                  >
+                    Refresh
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
 
-        const AppointmentStatusChip = ({ status }) => {
-            let color;
-            switch(status) {
-                case 'Done':
-                    color = 'success';
-                    break;
-                case 'Cancelled':
-                    color = 'error';
-                    break;
-                default:
-                    color = 'warning';
-            }
-            
-            return <Chip label={status} color={color} size="small" />;
-        };
-
-        const Body = () => (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    My Appointments
+            {/* Appointments Table */}
+            {isLoading ? (
+              <Box display="flex" justifyContent="center" py={4}>
+                <Typography>Loading appointments...</Typography>
+              </Box>
+            ) : error ? (
+              <Box display="flex" justifyContent="center" py={4}>
+                <Typography color="error">{error.message}</Typography>
+              </Box>
+            ) : filteredAppointments.length === 0 ? (
+              <Paper sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" color="textSecondary">
+                  No appointments found matching your criteria
                 </Typography>
-                
-                <DashboardStats />
-                <Filters />
-                
-                {filteredAppointments.length === 0 ? (
-                    <Box textAlign="center" py={4}>
-                        <Typography variant="h6" color="textSecondary">
-                            No appointments found matching your criteria
-                        </Typography>
-                    </Box>
-                ) : (
-                    <Paper sx={{ mt: 2 }}>
-                        <TableContainer>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Patient</TableCell>
-                                        <TableCell>Appointment Details</TableCell>
-                                        <TableCell>Medical Info</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell align="center">Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredAppointments.map(appt => (
-                                        <TableRow key={appt.id} hover>
-                                            <TableCell>
-                                                <Box display="flex" alignItems="center">
-                                                    <Avatar sx={{ bgcolor: deepPurple[500], mr: 2 }}>
-                                                        {appt.name.charAt(0)}
-                                                    </Avatar>
-                                                    <div>
-                                                        <Typography fontWeight="bold">{appt.name}</Typography>
-                                                        <Typography variant="body2" color="textSecondary">
-                                                            ID: {appt.id}
-                                                        </Typography>
-                                                    </div>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography>
-                                                    <CalendarToday fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />
-                                                    {new Date(appt.date).toLocaleDateString()}
-                                                </Typography>
-                                                <Typography>
-                                                    <AccessTime fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />
-                                                    {appt.starttime}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography><strong>Concerns:</strong> {appt.concerns}</Typography>
-                                                <Typography><strong>Symptoms:</strong> {appt.symptoms}</Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <AppointmentStatusChip status={appt.status} />
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Button 
-                                                    variant="contained" 
-                                                    color="primary" 
-                                                    href={`/Diagnose/${appt.id}`}
-                                                    sx={{ mr: 1, mb: 1 }}
-                                                    disabled={appt.status !== 'NotDone'}
-                                                >
-                                                    Diagnose
-                                                </Button>
-                                                {/* {appt.status === "NotDone" && (
-                                                    <Button 
-                                                        variant="outlined" 
-                                                        color="error" 
-                                                        onClick={() => {
-                                                            fetch('http://localhost:3001/deleteAppt?uid=' + appt.id);
-                                                            window.location.reload();
-                                                        }}
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                )} */}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Paper>
-                )}
-                
-                <Box mt={4}>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="body2" color="textSecondary" align="center">
-                        {`Showing ${filteredAppointments.length} of ${this.state.apptlist.length} appointments`}
-                    </Typography>
-                </Box>
-            </Container>
-        );
+              </Paper>
+            ) : (
+              <Paper sx={{ overflow: 'hidden' }}>
+                <TableContainer>
+                  <Table>
+                    <TableHead sx={{ bgcolor: 'primary.main' }}>
+                      <TableRow>
+                        <TableCell sx={{ color: 'white' }}>Patient</TableCell>
+                        <TableCell sx={{ color: 'white' }}>Appointment Details</TableCell>
+                        <TableCell sx={{ color: 'white' }}>Medical Information</TableCell>
+                        <TableCell sx={{ color: 'white' }}>Status</TableCell>
+                        <TableCell align="center" sx={{ color: 'white' }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredAppointments.map((appt) => (
+                        <TableRow key={appt.id} hover>
+                          <TableCell>
+                            <Box display="flex" alignItems="center">
+                              <Avatar sx={{ bgcolor: deepPurple[500], mr: 2 }}>
+                                {appt.name?.charAt(0) || 'P'}
+                              </Avatar>
+                              <Box>
+                                <Typography fontWeight="bold">{appt.name || 'Unknown'}</Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                  ID: {appt.id}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box>
+                              <Typography display="flex" alignItems="center">
+                                <CalendarToday fontSize="small" sx={{ mr: 1 }} />
+                                {appt.date ? new Date(appt.date).toLocaleDateString() : 'N/A'}
+                              </Typography>
+                              <Typography display="flex" alignItems="center">
+                                <AccessTime fontSize="small" sx={{ mr: 1 }} />
+                                {appt.starttime || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography><strong>Concerns:</strong> {appt.concerns || 'Not specified'}</Typography>
+                            <Typography><strong>Symptoms:</strong> {appt.symptoms || 'Not specified'}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip status={appt.status} />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Box display="flex" flexDirection="column" alignItems="center">
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                href={`/Diagnose/${appt.id}`}
+                                sx={{ mb: 1, width: '100%' }}
+                                disabled={appt.status !== 'NotDone'}
+                              >
+                                Diagnose
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                size="small"
+                                startIcon={<PictureAsPdf />}
+                                onClick={() => this.generatePatientReport(appt)}
+                                sx={{ width: '100%' }}
+                              >
+                                Report
+                              </Button>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            )}
 
-        return (
-            <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-                <Header />
-                <Body />
+            <Box mt={3}>
+              <Divider />
+              <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
+                Showing {filteredAppointments.length} of {this.state.apptlist.length} appointments
+              </Typography>
             </Box>
-        );
-    }
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 }
+
+const StatCard = ({ title, value, icon, color }) => (
+  <Card sx={{ bgcolor: color, color: 'white', height: '100%' }}>
+    <CardContent>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box>
+          <Typography variant="h5" component="div">
+            {value}
+          </Typography>
+          <Typography variant="body2">{title}</Typography>
+        </Box>
+        <Box sx={{ opacity: 0.8 }}>{icon}</Box>
+      </Box>
+    </CardContent>
+  </Card>
+);
+
+const StatusChip = ({ status }) => {
+  const statusMap = {
+    'NotDone': { label: 'Pending', color: 'warning' },
+    'Done': { label: 'Completed', color: 'success' },
+    'Cancelled': { label: 'Cancelled', color: 'error' }
+  };
+
+  const statusInfo = statusMap[status] || { label: status, color: 'default' };
+
+  return (
+    <Chip
+      label={statusInfo.label}
+      color={statusInfo.color}
+      size="small"
+      sx={{ fontWeight: 'bold' }}
+    />
+  );
+};
 
 export default DocViewAppt;
