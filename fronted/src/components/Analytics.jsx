@@ -69,7 +69,7 @@
 //         const [doctorsRes, patientsRes, appointmentsRes] = await Promise.all([
 //           fetch('http://localhost:3001/docInfo'),
 //           fetch('http://localhost:3001/getAllPatients'),
-//           fetch('http://localhost:3001/allDiagnoses')
+//           fetch('http://localhost:3001/getAllAppointments')
 //         ]);
 
 //         const doctors = await doctorsRes.json();
@@ -107,7 +107,7 @@
 
 //     const doctorsByGenderChart = [
 //       ['Gender', 'Count'],
-//       ...Object.entries(doctorsByGender)
+//       ...Object.entries(doctorsByGender).map(([gender, count]) => [gender, parseInt(count)])
 //     ];
 
 //     // Patients by gender
@@ -119,7 +119,7 @@
 
 //     const patientsByGenderChart = [
 //       ['Gender', 'Count'],
-//       ...Object.entries(patientsByGender)
+//       ...Object.entries(patientsByGender).map(([gender, count]) => [gender, parseInt(count)])
 //     ];
 
 //     // Appointments by status
@@ -131,10 +131,10 @@
 
 //     const appointmentsByStatusChart = [
 //       ['Status', 'Count'],
-//       ...Object.entries(appointmentsByStatus)
+//       ...Object.entries(appointmentsByStatus).map(([status, count]) => [status, parseInt(count)])
 //     ];
 
-//     // Monthly appointments (example - you might need to adjust based on your actual data)
+//     // Monthly appointments
 //     const monthlyAppointments = appointments.reduce((acc, app) => {
 //       if (!app.appointment_date) return acc;
 
@@ -151,7 +151,7 @@
 //         const [aMonth, aYear] = a[0].split('/').map(Number);
 //         const [bMonth, bYear] = b[0].split('/').map(Number);
 //         return aYear - bYear || aMonth - bMonth;
-//       })
+//       }).map(([month, count]) => [month, parseInt(count)])
 //     ];
 
 //     return {
@@ -400,7 +400,7 @@ const AnalyticsPage = () => {
         const [doctorsRes, patientsRes, appointmentsRes] = await Promise.all([
           fetch('http://localhost:3001/docInfo'),
           fetch('http://localhost:3001/getAllPatients'),
-          fetch('http://localhost:3001/allDiagnoses')
+          fetch('http://localhost:3001/getAllAppointments')
         ]);
 
         const doctors = await doctorsRes.json();
@@ -467,9 +467,9 @@ const AnalyticsPage = () => {
 
     // Monthly appointments
     const monthlyAppointments = appointments.reduce((acc, app) => {
-      if (!app.appointment_date) return acc;
+      if (!app.date) return acc;
 
-      const date = new Date(app.appointment_date);
+      const date = new Date(app.date);
       const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
 
       acc[monthYear] = (acc[monthYear] || 0) + 1;
@@ -506,9 +506,9 @@ const AnalyticsPage = () => {
       }}>
         <Container maxWidth="xl">
           <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
-            <IconButton onClick={handleBack} sx={{ mr: 2 }}>
+            {/* <IconButton onClick={handleBack} sx={{ mr: 2 }}>
               <ArrowBack />
-            </IconButton>
+            </IconButton> */}
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
               Analytics Dashboard
             </Typography>
@@ -558,7 +558,7 @@ const AnalyticsPage = () => {
                     <Typography variant="subtitle1">Completed Appointments</Typography>
                   </Box>
                   <Typography variant="h4">
-                    {appointments.filter(a => a.status === 'Completed').length}
+                    {appointments.filter(a => a.status === 'Done').length}
                   </Typography>
                 </Paper>
               </Grid>
@@ -578,7 +578,9 @@ const AnalyticsPage = () => {
                       is3D: false,
                       colors: ['#1976d2', '#f50057', '#4caf50'],
                       chartArea: { width: '90%', height: '80%' },
-                      legend: { position: isMobile ? 'bottom' : 'right' }
+                      legend: { position: isMobile ? 'bottom' : 'right' },
+                      title: 'Doctors by Gender',
+                      titleTextStyle: { fontSize: 16 }
                     }}
                     width="100%"
                     height="300px"
@@ -600,7 +602,9 @@ const AnalyticsPage = () => {
                       is3D: false,
                       colors: ['#1976d2', '#f50057', '#4caf50'],
                       chartArea: { width: '90%', height: '80%' },
-                      legend: { position: isMobile ? 'bottom' : 'right' }
+                      legend: { position: isMobile ? 'bottom' : 'right' },
+                      title: 'Patients by Gender',
+                      titleTextStyle: { fontSize: 16 }
                     }}
                     width="100%"
                     height="300px"
@@ -622,7 +626,9 @@ const AnalyticsPage = () => {
                       colors: ['#1976d2'],
                       chartArea: { width: '80%', height: '80%' },
                       hAxis: { minValue: 0 },
-                      legend: { position: 'none' }
+                      legend: { position: 'none' },
+                      title: 'Appointments by Status',
+                      titleTextStyle: { fontSize: 16 }
                     }}
                     width="100%"
                     height="300px"
@@ -644,7 +650,9 @@ const AnalyticsPage = () => {
                       chartArea: { width: '85%', height: '80%' },
                       hAxis: { title: 'Month' },
                       vAxis: { title: 'Appointments', minValue: 0 },
-                      legend: { position: 'none' }
+                      legend: { position: 'none' },
+                      title: 'Monthly Appointments',
+                      titleTextStyle: { fontSize: 16 }
                     }}
                     width="100%"
                     height="300px"

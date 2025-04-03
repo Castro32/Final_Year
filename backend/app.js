@@ -263,6 +263,19 @@ app.get('/makeDocAccount', async (req, res) => {
   }
 });
 
+//  getAllAppointments
+app.get('/getAllAppointments', async (req, res) => {
+  try {
+    const statement = 'SELECT * FROM appointment';
+    console.log(statement);
+    const results = await query(statement);
+    res.json({ data: results });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Checks if patient is logged in
 app.get('/checklogin', async (req, res) => {
   let params = req.query;
