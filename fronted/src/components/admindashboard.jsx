@@ -827,7 +827,7 @@ class AdminDashboard extends Component {
     Promise.all([
       fetch('http://localhost:3001/docInfo').then(res => res.json()),
       fetch('http://localhost:3001/getAllPatients').then(res => res.json()),
-      fetch('http://localhost:3001/getAllAppointments').then(res => res.json()) // New endpoint to fetch all appointments
+      fetch('http://localhost:3001/getAllAppointments').then(res => res.json()) 
     ])
     .then(([doctorsRes, patientsRes, appointmentsRes]) => {
       this.setState({
@@ -1357,7 +1357,7 @@ class AdminDashboard extends Component {
               <Table>
                 <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Patient</TableCell>
+                    {/* <TableCell sx={{ fontWeight: 'bold' }}>Patient</TableCell> */}
                     <TableCell sx={{ fontWeight: 'bold' }}>Doctor</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Start Time</TableCell>
@@ -1366,9 +1366,9 @@ class AdminDashboard extends Component {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {appointments.slice(0, 5).map(appointment => (
+                  {appointments.map(appointment => (
                     <TableRow key={appointment.id} hover>
-                      <TableCell>{appointment.user}</TableCell>
+                      {/* <TableCell>{appointment.user}</TableCell> */}
                       <TableCell>{appointment.doctor}</TableCell>
                       <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
                       <TableCell>{appointment.starttime}</TableCell>
