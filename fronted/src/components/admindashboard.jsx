@@ -77,7 +77,6 @@
 //     },
 //   },
 // });
-
 // class AdminDashboard extends Component {
 //   state = {
 //     doctors: [],
@@ -103,12 +102,12 @@
 
 //   fetchData = () => {
 //     this.setState({ loading: true });
-  
+
 //     // Fetch all data
 //     Promise.all([
 //       fetch('http://localhost:3001/docInfo').then(res => res.json()),
 //       fetch('http://localhost:3001/getAllPatients').then(res => res.json()),
-//       fetch('http://localhost:3001/getAllAppointments').then(res => res.json()) // New endpoint to fetch all appointments
+//       fetch('http://localhost:3001/getAllAppointments').then(res => res.json()) 
 //     ])
 //     .then(([doctorsRes, patientsRes, appointmentsRes]) => {
 //       this.setState({
@@ -259,8 +258,9 @@
 //     const { location } = this.props;
 //     const isMainDashboard = location.pathname === '/admindashboard';
 
-//     const pendingAppointments = appointments.filter(app => app.status === 'Pending').length;
-//     const completedAppointments = appointments.filter(app => app.status === 'Completed').length;
+//     const pendingAppointments = appointments.filter(app => app.status === 'NotDone').length;
+//     const completedAppointments = appointments.filter(app => app.status === 'Done').length;
+//     const cancelledAppointments = appointments.filter(app => app.status === 'Cancelled').length;
 
 //     const Header = () => (
 //       <AppBar position="fixed" sx={{
@@ -487,6 +487,10 @@
 //             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{pendingAppointments}</Typography>
 //           </Paper>
 //           <Paper sx={{ p: 3, borderRadius: 2 }}>
+//             <Typography variant="subtitle2" color="text.secondary">Cancelled Appointments</Typography>
+//             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{cancelledAppointments}</Typography>
+//           </Paper>
+//           <Paper sx={{ p: 3, borderRadius: 2 }}>
 //             <Typography variant="subtitle2" color="text.secondary">Completed Appointments</Typography>
 //             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{completedAppointments}</Typography>
 //           </Paper>
@@ -638,26 +642,26 @@
 //               <Table>
 //                 <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
 //                   <TableRow>
-//                     <TableCell sx={{ fontWeight: 'bold' }}>Patient</TableCell>
+//                     {/* <TableCell sx={{ fontWeight: 'bold' }}>Patient</TableCell> */}
 //                     <TableCell sx={{ fontWeight: 'bold' }}>Doctor</TableCell>
 //                     <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-//                     <TableCell sx={{ fontWeight: 'bold' }}>Symptoms</TableCell>
+//                     <TableCell sx={{ fontWeight: 'bold' }}>Start Time</TableCell>
+//                     <TableCell sx={{ fontWeight: 'bold' }}>End Time</TableCell>
 //                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
 //                   </TableRow>
 //                 </TableHead>
 //                 <TableBody>
-//                   {appointments.slice(0, 5).map(appointment => (
-//                     <TableRow key={appointment.ID} hover>
-//                       <TableCell>{appointment.user}</TableCell>
+//                   {appointments.map(appointment => (
+//                     <TableRow key={appointment.id} hover>
+//                       {/* <TableCell>{appointment.user}</TableCell> */}
 //                       <TableCell>{appointment.doctor}</TableCell>
-//                       <TableCell>{new Date(appointment.theDate).toLocaleDateString()}</TableCell>
-//                       <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-//                         {appointment.theSymptoms || 'None'}
-//                       </TableCell>
+//                       <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
+//                       <TableCell>{appointment.starttime}</TableCell>
+//                       <TableCell>{appointment.endtime}</TableCell>
 //                       <TableCell>
 //                         <Chip
 //                           label={appointment.status}
-//                           color={appointment.status === 'Completed' ? 'success' : 'warning'}
+//                           color={appointment.status === 'Done' ? 'success' : 'warning'}
 //                           size="small"
 //                         />
 //                       </TableCell>
@@ -797,13 +801,13 @@ const theme = createTheme({
     },
   },
 });
+
 class AdminDashboard extends Component {
   state = {
     doctors: [],
     patients: [],
     appointments: [],
     selectedPatientHistory: null,
-    selectedPatientEmail: null,
     openHistoryFor: null,
     editDialogOpen: false,
     currentEditItem: null,
@@ -823,11 +827,10 @@ class AdminDashboard extends Component {
   fetchData = () => {
     this.setState({ loading: true });
 
-    // Fetch all data
     Promise.all([
       fetch('http://localhost:3001/docInfo').then(res => res.json()),
       fetch('http://localhost:3001/getAllPatients').then(res => res.json()),
-      fetch('http://localhost:3001/getAllAppointments').then(res => res.json()) 
+      fetch('http://localhost:3001/getAllAppointments').then(res => res.json())
     ])
     .then(([doctorsRes, patientsRes, appointmentsRes]) => {
       this.setState({
@@ -855,7 +858,6 @@ class AdminDashboard extends Component {
         .then(res => res.json())
         .then(res => this.setState({
           selectedPatientHistory: res.data[0] || null,
-          selectedPatientEmail: email,
           openHistoryFor: email
         }))
         .catch(error => console.error('Error fetching patient history:', error));
@@ -867,7 +869,7 @@ class AdminDashboard extends Component {
     this.setState({ drawerOpen: false });
   };
 
-  handleDelete = async (type, email) => {
+  handleDelete = async (type, id) => {
     const confirm = await Swal.fire({
       title: 'Are you sure?',
       text: "You won't be able to revert this!",
@@ -881,13 +883,17 @@ class AdminDashboard extends Component {
     if (!confirm.isConfirmed) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/${type}/${email}`, {
+      const endpoint = type === 'appointment'
+        ? `http://localhost:3001/deleteAppt?uid=${id}`
+        : `http://localhost:3001/api/${type}/${id}`;
+
+      const response = await fetch(endpoint, {
         method: 'DELETE'
       });
 
       if (!response.ok) throw new Error(`Failed to delete ${type}`);
 
-      Swal.fire('Deleted!', `${type === 'doctor' ? 'Doctor' : 'Patient'} has been deleted.`, 'success');
+      Swal.fire('Deleted!', `${type.charAt(0).toUpperCase() + type.slice(1)} has been deleted.`, 'success');
       this.fetchData();
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
@@ -940,9 +946,9 @@ class AdminDashboard extends Component {
 
       if (!response.ok) throw new Error('Failed to update');
 
-      Swal.fire('Updated!', `${editType === 'doctor' ? 'Doctor' : 'Patient'} updated.`, 'success');
+      Swal.fire('Updated!', `${editType.charAt(0).toUpperCase() + editType.slice(1)} updated.`, 'success');
       this.fetchData();
-      this.handleEditDialogClose();
+      this.setState({ editDialogOpen: false });
     } catch (error) {
       console.error(`Error updating ${editType}:`, error);
       Swal.fire('Error!', error.message || `Update failed.`, 'error');
@@ -978,8 +984,9 @@ class AdminDashboard extends Component {
     const { location } = this.props;
     const isMainDashboard = location.pathname === '/admindashboard';
 
-    const pendingAppointments = appointments.filter(app => app.status === 'Pending').length;
+    const pendingAppointments = appointments.filter(app => app.status === 'NotDone').length;
     const completedAppointments = appointments.filter(app => app.status === 'Done').length;
+    const cancelledAppointments = appointments.filter(app => app.status === 'Cancelled').length;
 
     const Header = () => (
       <AppBar position="fixed" sx={{
@@ -1206,6 +1213,10 @@ class AdminDashboard extends Component {
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{pendingAppointments}</Typography>
           </Paper>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">Cancelled Appointments</Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{cancelledAppointments}</Typography>
+          </Paper>
+          <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="subtitle2" color="text.secondary">Completed Appointments</Typography>
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{completedAppointments}</Typography>
           </Paper>
@@ -1357,18 +1368,17 @@ class AdminDashboard extends Component {
               <Table>
                 <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableRow>
-                    {/* <TableCell sx={{ fontWeight: 'bold' }}>Patient</TableCell> */}
                     <TableCell sx={{ fontWeight: 'bold' }}>Doctor</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Start Time</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>End Time</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {appointments.map(appointment => (
                     <TableRow key={appointment.id} hover>
-                      {/* <TableCell>{appointment.user}</TableCell> */}
                       <TableCell>{appointment.doctor}</TableCell>
                       <TableCell>{new Date(appointment.date).toLocaleDateString()}</TableCell>
                       <TableCell>{appointment.starttime}</TableCell>
@@ -1379,6 +1389,13 @@ class AdminDashboard extends Component {
                           color={appointment.status === 'Done' ? 'success' : 'warning'}
                           size="small"
                         />
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title="Delete">
+                          <IconButton size="small" onClick={() => this.handleDelete('appointment', appointment.id)} color="error">
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1427,7 +1444,6 @@ class AdminDashboard extends Component {
   }
 }
 
-// Wrap the component with withRouter equivalent for React Router v6
 const withNavigationAndLocation = (Component) => {
   return (props) => {
     const navigate = useNavigate();

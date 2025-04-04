@@ -85,7 +85,7 @@ const LogIn = () => {
         <img
           src={Image}
           alt="Image"
-          style={{ maxWidth: '100%', borderRadius: '8px' }}
+          style={{ maxWidth: '80%', borderRadius: '8px' }}
         />
       </Box>
       <Box flex={1} display="flex" flexDirection="column" justifyContent="center">

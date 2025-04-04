@@ -70,7 +70,7 @@ export class CreateAccount extends Component {
             title: 'Account Created!',
             text: 'Your account has been created successfully.',
           }).then(() => {
-            window.location = "/login";
+            window.location = "/admindashboard";
           });
         }
       });
